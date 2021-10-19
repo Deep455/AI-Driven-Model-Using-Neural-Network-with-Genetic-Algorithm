@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(NeuralNetwork))]
+
 public class OurVehicleController : MonoBehaviour
 {
     // Start is called before the first frame update
@@ -18,6 +20,7 @@ public class OurVehicleController : MonoBehaviour
 
 
     private Vector3 start_pos, start_rotation;
+    private NeuralNetwork neural_network;
 
     [Range(-1f, 1f)]
 
@@ -28,6 +31,9 @@ public class OurVehicleController : MonoBehaviour
     // For giving weight coefficient
     public float overall_fitness, average_speed_multiplier=0.2f, distance_multiplier=1.4f, sensor_multiplier = 0.1f;
 
+    [Header("Neural Network Options")]
+    public int LAYERS = 1, NEURONS = 10;
+
     private Vector3 last_pos;
     private float average_speed, total_distance_travelled;
     
@@ -37,9 +43,16 @@ public class OurVehicleController : MonoBehaviour
     private void Awake(){
         start_pos = transform.position;
         start_rotation = transform.eulerAngles;
+
+        neural_network = GetComponent<NeuralNetwork>();
+
+        neural_network.Initialise(LAYERS, NEURONS);
     }
 
     public void ResetUp(){
+
+        neural_network.Initialise(LAYERS, NEURONS);
+
         total_time_since_start=0f;
         total_distance_travelled = 0f;
         average_speed =0f;
@@ -49,16 +62,18 @@ public class OurVehicleController : MonoBehaviour
         transform.eulerAngles = start_rotation;
     }
     
-    private void OnCollision(Collision collision){
+    private void OnCollisionEnter(Collision collision){
         ResetUp();
 
     }
 
-    private void UpdateFixed(){
+    private void FixedUpdate(){
         InptSensors();
         last_pos = transform.position;
 
         // Neural Network down below here
+
+        (acceleration, turning_value) = neural_network.Network_run(sensor1, sensor2, sensor3);
 
         MoveCar(acceleration, turning_value);
         
@@ -100,21 +115,19 @@ public class OurVehicleController : MonoBehaviour
 
         if (Physics.Raycast(rr, out hit)){
             sensor1 = hit.distance/20;
-            print("Sensor 1 : " + sensor1);
-
+            Debug.DrawLine(rr.origin, hit.point, Color.red);
         }
 
         rr.direction = b;
         if (Physics.Raycast(rr, out hit)){
             sensor2 = hit.distance/20;
-            print("Sensor 2 : " + sensor2);
-
+            Debug.DrawLine(rr.origin, hit.point, Color.red);
         }
 
         rr.direction = c;
         if (Physics.Raycast(rr, out hit)){
             sensor3 = hit.distance/20;
-            print("Sensor 3 : " + sensor3);
+            Debug.DrawLine(rr.origin, hit.point, Color.red);
 
         }
 
@@ -124,7 +137,7 @@ public class OurVehicleController : MonoBehaviour
 
     private Vector3 inpt;
     public void MoveCar (float v, float h){
-        inpt = Vector3.Lerp(Vector3.zero, new Vector3(0, 0, 11.4f), 0.02f);
+        inpt = Vector3.Lerp(Vector3.zero, new Vector3(0, 0, v * 11.4f), 0.02f);
         inpt = transform.TransformDirection(inpt);
 
         transform.position += inpt;
