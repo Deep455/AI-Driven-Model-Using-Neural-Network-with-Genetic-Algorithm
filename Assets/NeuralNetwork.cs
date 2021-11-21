@@ -61,6 +61,52 @@ public class NeuralNetwork : MonoBehaviour
         
     }
 
+    public NeuralNetwork InitialiseCopy(int hidden_layers_count, int hidden_neurons_count){
+        NeuralNetwork nn =new NeuralNetwork();
+
+        List<Matrix<float>> new_weights = new List<Matrix<float>>();
+
+        for(int i=0; i < this.weights_matrix.Count; i++){
+
+            Matrix<float> current_weight = Matrix<float>.Build.Dense(weights_matrix[i].RowCount, weights_matrix[i].ColumnCount);
+
+            for(int x=0; x<current_weight.RowCount; x++){
+
+                for(int y=0; y<current_weight.ColumnCount; y++){
+                    current_weight[x,y] = weights_matrix[i][x,y];
+                }
+            }
+            new_weights.Add(current_weight);
+        }
+
+        List<float> new_biases = new List<float>();
+
+        new_biases.AddRange(biases);
+
+        nn.weights_matrix = new_weights;
+        nn.biases = new_biases;
+
+        nn.InitialisingHidden(hidden_layers_count, hidden_neurons_count);
+
+        return nn;
+
+    }
+
+    public void InitialisingHidden(int hidden_layers_count, int hidden_neurons_count){
+
+        input_layer_matrix.Clear();
+        hidden_layers_matrices.Clear();
+        output_layer_matrix.Clear();
+
+        for(int i=0; i<hidden_layers_count+1; i++){
+
+            Matrix<float> new_hidden_layer = Matrix<float>.Build.Dense(1, hidden_neurons_count);
+
+            hidden_layers_matrices.Add(new_hidden_layer);
+        }
+
+    }
+
     public void Weight_randomise(){
         
         for(int i=0; i < weights_matrix.Count; i++){

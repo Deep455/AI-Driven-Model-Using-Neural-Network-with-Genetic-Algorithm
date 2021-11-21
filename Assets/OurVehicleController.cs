@@ -46,12 +46,14 @@ public class OurVehicleController : MonoBehaviour
 
         neural_network = GetComponent<NeuralNetwork>();
 
-        neural_network.Initialise(LAYERS, NEURONS);
+    }
+
+    public void ResetByNetwork(NeuralNetwork net){
+        neural_network = net;
+        ResetUp();
     }
 
     public void ResetUp(){
-
-        neural_network.Initialise(LAYERS, NEURONS);
 
         total_time_since_start=0f;
         total_distance_travelled = 0f;
@@ -63,7 +65,7 @@ public class OurVehicleController : MonoBehaviour
     }
     
     private void OnCollisionEnter(Collision collision){
-        ResetUp();
+        Death();
 
     }
 
@@ -85,6 +87,10 @@ public class OurVehicleController : MonoBehaviour
         // turning_value = 0;
     }
 
+    private void Death(){
+        GameObject.FindObjectOfType<GeneticAlgoManager>().Death(overall_fitness, neural_network);
+    }
+
     private void FitnessCalculator(){
         total_distance_travelled += Vector3.Distance(transform.position, last_pos);
 
@@ -93,13 +99,13 @@ public class OurVehicleController : MonoBehaviour
         overall_fitness = (total_distance_travelled*distance_multiplier) + (average_speed*average_speed_multiplier) + (((sensor1+sensor2+sensor3)/3)*sensor_multiplier);
 
         if ( total_time_since_start > 20 && overall_fitness < 40){
-            ResetUp();
+            Death();
         }
 
         if (overall_fitness >= 1000){
 
             // Could save the result to a JSON file
-            ResetUp();
+            Death();
         }
 
     }
